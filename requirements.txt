@@ -1,2 +1,2 @@
-hid
+hid==1.0.4
 pyudev
