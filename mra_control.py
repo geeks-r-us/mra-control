@@ -62,6 +62,7 @@ class mra_device:
 def main(args):
     if args.command == 'list':
         list = audio_manager.enumerate_sounddevices()
+        print("Found audio devices:")
         for device in list:
             if device.usb_device is not None:
                 print(f'Name: {device.get_name()} \t {device.usb_device.device_node}')
@@ -97,6 +98,10 @@ if __name__ == "__main__":
     main_parser.add_argument('path', type=str, nargs=1, help='path of the audio module' )
 
     args = parser.parse_args()
-
+    
+    if args.command is None:
+        parser.print_help()
+        quit()
+    
     main(args)
     quit()
