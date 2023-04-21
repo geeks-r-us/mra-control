@@ -30,7 +30,8 @@ class mra_device:
         self.__device = hid.Device(path=str.encode(path))
 
     def __del__(self):
-        self.__device.close()
+        if self.__device is not None:
+            self.__device.close()
 
     def __modifyBit( self, input,  position,  bitstate):
         mask = 1 << position
@@ -38,14 +39,11 @@ class mra_device:
 
     def set_gpio(self, num, state):
         self.__states = self.__modifyBit(self.__states, num - 1, state)
-        try:
-            data = bytes([0,0,self.__bitmask,self.__states,0])
-            self.__device.write(data)
-            data = self.__device.read(5,10)
-        except hid.DeviceError as e:
-            print(f"Error setting GPIO: {e}")
-        except IndexError as e:
-            print(f"Invalid GPIO number: {e}")  
+
+        data = bytes([0,0,self.__bitmask,self.__states,0])
+        self.__device.write(data)
+        data = self.__device.read(5,10)
+
 
     def mute(self, state):
         output = 0 if state else 1
@@ -68,19 +66,24 @@ def main(args):
                 print(f'Name: {device.get_name()} \t {device.usb_device.device_node}')
         
     elif args.command == 'control':
-        device = mra_device(path=args.path[0])
+        try:
+            device = mra_device(path=args.path[0])
         
-        if args.standby is not None:
-            print("Standby: " + str(args.standby))
-            device.standby(args.standby)
-        
-        if args.mute is not None:
-            print("Mute: " + str(args.mute))
-            device.mute(args.mute)
+            if args.standby is not None:
+                print("Standby: " + str(args.standby))
+                device.standby(args.standby)
+            
+            if args.mute is not None:
+                print("Mute: " + str(args.mute))
+                device.mute(args.mute)
 
-        if args.gain is not None:
-            print("Gain: " + str(args.gain))
-            device.set_gain(args.gain)
+            if args.gain is not None:
+                print("Gain: " + str(args.gain))
+                device.set_gain(args.gain)
+        except hid.HIDException as e:
+            print(f"Error opening device: {e}")
+        except IndexError as e:
+            print(f"Invalid GPIO number: {e}")
 
 if __name__ == "__main__":
     import argparse
