@@ -24,7 +24,7 @@ class audio_manager:
     def enumerate_sounddevices():
         audio_devices = []
         context = pyudev.Context()
-        for device in context.list_devices(subsystem='sound', TAGS=':seat:'):
+        for device in context.list_devices(subsystem='sound', tag='seat'):
             audio_dev = audio_device()
             audio_dev.audio_device = device
             audio_devices.append(audio_dev)
