@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 import hid
 from enum import Enum
 from audio_manager import audio_manager
