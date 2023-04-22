@@ -9,13 +9,21 @@ class MRARequestHandler(BaseHTTPRequestHandler):
         query = urllib.parse.parse_qs(parsed_path.query)
 
         if path == '/control':
-            device = mra_device(path=f"/dev/hidraw{query['deviceid'][0]}")
-            if 'standby' in query:
-                device.standby(query['standby'][0] == 'true')
-            if 'mute' in query:
-                device.mute(query['mute'][0] == 'true')
-            if 'gain' in query:
-                device.set_gain(Gain.from_string(query['gain'][0]))
+            try:
+                device = mra_device(path=f"/dev/hidraw{query['deviceid'][0]}")
+                if 'standby' in query:
+                    device.standby(query['standby'][0] == 'true')
+                if 'mute' in query:
+                    device.mute(query['mute'][0] == 'true')
+                if 'gain' in query:
+                    device.set_gain(Gain.from_string(query['gain'][0]))
+            except Exception as e:
+                print(f"Error opening device: {e}")
+                self.send_response(500)
+                self.send_header('Content-type', 'text/html')
+                self.end_headers()
+                self.wfile.write(bytes("Error opening device", "utf-8"))
+                return
             self.send_response(200)
             self.send_header('Content-type', 'text/html')
             self.end_headers()
@@ -28,7 +36,7 @@ class MRARequestHandler(BaseHTTPRequestHandler):
 
 def run():
     print('starting server...')
-    server_address = ('', 8080)
+    server_address = ('localhost', 8080)
     httpd = HTTPServer(server_address, MRARequestHandler)
     print('running server...')
     httpd.serve_forever()
