@@ -41,11 +41,12 @@ class mra_device:
         return (input & ~mask) | ((bitstate << position) & mask)
 
     def set_gpio(self, num, state):
+        self.__states = self.__device.get_input_report(0,5)[2]
         self.__states = self.__modifyBit(self.__states, num - 1, state)
 
         data = bytes([0,0,self.__bitmask,self.__states,0])
         self.__device.write(data)
-        data = self.__device.read(5,10)
+        data_read = self.__device.read(5,10)
 
 
     def mute(self, state):
@@ -56,9 +57,18 @@ class mra_device:
         output = 0 if state else 1
         self.set_gpio(3, output)
 
-    def set_gain(self, gain : Gain):
+    def set_gain(self, gain: Gain):
         self.set_gpio(1, gain.value & (1 << 0))
         self.set_gpio(2, (gain.value & (1 << 1)) >> 1)
+
+    def get_status(self):
+        
+        # Send the GPIO input report to the device
+        data_read = self.__device.get_input_report(0,5)[2]
+    
+        print("Mute: " + str((data_read & (1 << 3))>0))
+        print("Standby: " + str((data_read & (1 << 2))>0))
+        print("Gain: " + Gain(data_read & 0x03).name)
     
 def main(args):
     if args.command == 'list':
@@ -67,6 +77,15 @@ def main(args):
         for device in list:
             if device.usb_device is not None:
                 print(f'Name: {device.get_name()} \t {device.usb_device.device_node}')
+
+    elif args.command == 'status':
+        try:
+            device = mra_device(path=args.path[0])
+            device.get_status()
+        except hid.HIDException as e:
+            print(f"Error opening device: {e}")
+        except IndexError as e:
+            print(f"Invalid GPIO number: {e}")
         
     elif args.command == 'control':
         try:
@@ -92,14 +111,18 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description='control a geeks-r-us audio module')
     subparsers = parser.add_subparsers(dest='command')
-
+    
     # Subparser for the list command
     list_parser = subparsers.add_parser('list', help='lists available modules')
 
+    # Subparser for the status command
+    status_parser = subparsers.add_parser('status', help='show modules status')
+    status_parser.add_argument('path', type=str, nargs=1, help='path of the audio module' )
+
     # Subparser for the main command
     main_parser = subparsers.add_parser('control', help='control a geeks-r-us audio module')
-    main_parser.add_argument('--standby', default=False, type=lambda x: (str(x).lower() == 'true'), help='turns audio module standby on / off')
-    main_parser.add_argument('--mute', default=False, type=lambda x: (str(x).lower() == 'true'), help='mutes / unmutes the module')
+    main_parser.add_argument('--standby', type=lambda x: (str(x).lower() == 'true'), help='turns audio module standby on / off')
+    main_parser.add_argument('--mute',  type=lambda x: (str(x).lower() == 'true'), help='mutes / unmutes the module')
     main_parser.add_argument('--gain', type=Gain.from_string, choices=list(Gain), help='sets the gain level of the module')
     main_parser.add_argument('path', type=str, nargs=1, help='path of the audio module' )
 
