@@ -4,8 +4,7 @@ MRA Control is a command-line utility for controlling the gain and mute of MRA d
 
 ## Requirements
 Python 3.9 or higher
-pyudev library 
-hid library
+hidapi library
 
 ## Installation
 Clone this repository and install the required packages:

@@ -3,7 +3,6 @@
 
 import hid
 from enum import Enum
-from audio_manager import audio_manager
 
 class Gain (Enum):
     GAIN25_6dB = 0
@@ -27,11 +26,15 @@ class mra_device:
     __states =  0b00000000 # inital states of GPIOs
 
     def __init__(self, vid, pid, serial):
-        self.__device = hid.Device(vid, pid)
-   
+        self.__device = hid.device()
+        self.__device.open(vid, pid, serial)
+        self.__device.set_nonblocking(1)
+        
     def __init__(self, path):
-        self.__device = hid.Device(path=str.encode(path))
-
+        self.__device = hid.device()
+        self.__device.open_path(path.encode())
+        self.__device.set_nonblocking(1)
+        
     def __del__(self):
         if self.__device is not None:
             self.__device.close()
@@ -46,7 +49,7 @@ class mra_device:
 
         data = bytes([0,0,self.__bitmask,self.__states,0])
         self.__device.write(data)
-        data_read = self.__device.read(5,10)
+        data_read = self.__device.read(5, timeout_ms=1000)
 
 
     def mute(self, state):
@@ -65,24 +68,20 @@ class mra_device:
         
         # Send the GPIO input report to the device
         data_read = self.__device.get_input_report(0,5)[2]
-    
-        print("Mute: " + str((data_read & (1 << 3))>0))
-        print("Standby: " + str((data_read & (1 << 2))>0))
+        print("Mute: " + str((data_read & (1 << 3))==0))
+        print("Standby: " + str((data_read & (1 << 2))==0))
         print("Gain: " + Gain(data_read & 0x03).name)
     
 def main(args):
     if args.command == 'list':
-        list = audio_manager.enumerate_sounddevices()
         print("Found audio devices:")
-        for device in list:
-            if device.usb_device is not None:
-                print(f'Name: {device.get_name()} \t {device.usb_device.device_node}')
-
+        for device_dict in hid.enumerate(0x0d8c, 0x0013):
+            print(f'Name: {device_dict["product_string"]} \t {device_dict["path"].decode()}')
     elif args.command == 'status':
         try:
-            device = mra_device(path=args.path[0])
+            device = mra_device(args.path[0])
             device.get_status()
-        except hid.HIDException as e:
+        except IOError as e:
             print(f"Error opening device: {e}")
         except IndexError as e:
             print(f"Invalid GPIO number: {e}")
@@ -102,7 +101,7 @@ def main(args):
             if args.gain is not None:
                 print("Gain: " + str(args.gain))
                 device.set_gain(args.gain)
-        except hid.HIDException as e:
+        except IOError as e:
             print(f"Error opening device: {e}")
         except IndexError as e:
             print(f"Invalid GPIO number: {e}")

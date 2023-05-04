@@ -10,7 +10,7 @@ class MRARequestHandler(BaseHTTPRequestHandler):
 
         if path == '/control':
             try:
-                device = mra_device(path=f"/dev/hidraw{query['deviceid'][0]}")
+                device = mra_device(path=f"{query['deviceid'][0]}")
                 if 'standby' in query:
                     device.standby(query['standby'][0] == 'true')
                 if 'mute' in query:
