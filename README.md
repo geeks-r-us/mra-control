@@ -55,6 +55,13 @@ Now you can control the device by GET requests like:
 
     wget http://localhost:8080/control?deviceid=<X>&mute=True
 
+Server can run as service, you need to adapt the file if you have not installed it in /opt/mra-control:
+
+    sudo cp ./mra_http_control.service /etc/systemd/system/mra-http-control.service
+    sudo systemctl enable mra-http-control.service
+    sudo systemctl daemon-reload
+    sudo systemctl start mra-http-control.service
+
 ## Contributing
 Feel free to contribute to this project by opening an issue or submitting a pull request.
 
