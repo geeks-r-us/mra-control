@@ -10,8 +10,10 @@ hidapi library
 Clone this repository and install the required packages:
 
 
-    git clone https://github.com/your_username/mra_control.git
+    git clone https://github.com/geeks-r-us/mra-control.git
     cd mra_control
+    python3 -m venv .venv
+    source ./.venv/bin/activate
     pip install -r requirements.txt
 
 To make the devices accessable for non root users you have to add a udev rule:
