@@ -79,7 +79,7 @@ def main(args):
             print(f'Name: {device_dict["product_string"]} \t {device_dict["path"].decode()}')
     elif args.command == 'status':
         try:
-            if args.path not None:
+            if args.path is not None:
                 device = mra_device(args.path)
                 device.get_status()
             else:
