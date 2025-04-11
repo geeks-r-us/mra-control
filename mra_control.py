@@ -79,8 +79,17 @@ def main(args):
             print(f'Name: {device_dict["product_string"]} \t {device_dict["path"].decode()}')
     elif args.command == 'status':
         try:
-            device = mra_device(args.path[0])
-            device.get_status()
+            if args.path not None:
+                device = mra_device(args.path)
+                device.get_status()
+            else:
+                print("Status of all found devices:")
+                for device_dict in hid.enumerate(0x0d8c, 0x0013):
+                    print(f'Name: {device_dict["product_string"]} \t {device_dict["path"].decode()}')
+                    device = mra_device(device_dict["path"].decode())
+                    device.get_status()
+                    print("\n")
+
         except IOError as e:
             print(f"Error opening device: {e}")
         except IndexError as e:
@@ -116,7 +125,7 @@ if __name__ == "__main__":
 
     # Subparser for the status command
     status_parser = subparsers.add_parser('status', help='show modules status')
-    status_parser.add_argument('path', type=str, nargs=1, help='path of the audio module' )
+    status_parser.add_argument('path', type=str, nargs='?', help='path of the audio module (optional)' )
 
     # Subparser for the main command
     main_parser = subparsers.add_parser('control', help='control a geeks-r-us audio module')
